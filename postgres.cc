@@ -127,7 +127,7 @@ schema_pqxx::schema_pqxx(std::string &conninfo, bool no_catalog) : c(conninfo)
   booltype = name2type["bool"];
   inttype = name2type["int4"];
 
-  internaltype = name2type["internal"];
+  internaltype = NULL;
   arraytype = name2type["anyarray"];
 
   cerr << "done." << endl;
@@ -204,7 +204,7 @@ schema_pqxx::schema_pqxx(std::string &conninfo, bool no_catalog) : c(conninfo)
   cerr << "done." << endl;
 
   cerr << "Loading routines...";
-  r = w.exec("select (select nspname from pg_namespace where oid = pronamespace), oid, prorettype, proname "
+  r = w.exec("select 'pg_catalog', oid, prorettype, proname "
 	     "from pg_proc "
 	     "where prorettype::regtype::text not in ('event_trigger', 'trigger', 'opaque', 'internal') "
 	     "and proname <> 'pg_event_trigger_table_rewrite_reason' "
@@ -225,9 +225,7 @@ schema_pqxx::schema_pqxx(std::string &conninfo, bool no_catalog) : c(conninfo)
   cerr << "Loading routine parameters...";
 
   for (auto &proc : routines) {
-    string q("select unnest(proargtypes) "
-	     "from pg_proc ");
-    q += " where oid = " + w.quote(proc.specific_name);
+    string q("select unnest((select proargtypes from pg_proc where oid = " + w.quote(proc.specific_name) + "::int::oid))");
       
     r = w.exec(q);
     for (auto row : r) {
@@ -239,7 +237,7 @@ schema_pqxx::schema_pqxx(std::string &conninfo, bool no_catalog) : c(conninfo)
   cerr << "done." << endl;
 
   cerr << "Loading aggregates...";
-  r = w.exec("select (select nspname from pg_namespace where oid = pronamespace), oid, prorettype, proname "
+  r = w.exec("select 'pg_catalog', oid, prorettype, proname "
 	     "from pg_proc "
 	     "where prorettype::regtype::text not in ('event_trigger', 'trigger', 'opaque', 'internal') "
 	     "and proname not in ('pg_event_trigger_table_rewrite_reason') "
@@ -262,9 +260,7 @@ schema_pqxx::schema_pqxx(std::string &conninfo, bool no_catalog) : c(conninfo)
   cerr << "Loading aggregate parameters...";
 
   for (auto &proc : aggregates) {
-    string q("select unnest(proargtypes) "
-	     "from pg_proc ");
-    q += " where oid = " + w.quote(proc.specific_name);
+    string q("select unnest((select proargtypes from pg_proc where oid = " + w.quote(proc.specific_name) + "::int::oid))");
       
     r = w.exec(q);
     for (auto row : r) {
