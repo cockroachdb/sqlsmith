@@ -352,8 +352,12 @@ void dut_libpq::command(const std::string &stmt)
 
 void dut_libpq::test(const std::string &stmt)
 {
-    command("ROLLBACK;");
     command("BEGIN;");
-    command(stmt.c_str());
+    try {
+        command(stmt.c_str());
+    } catch (const dut::failure& e) {
+        command("ROLLBACK;");
+        throw e;
+    }
     command("ROLLBACK;");
 }
