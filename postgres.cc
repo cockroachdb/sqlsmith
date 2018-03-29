@@ -144,7 +144,7 @@ schema_pqxx::schema_pqxx(std::string &conninfo, bool no_catalog) : c(conninfo)
     string insertable(row[2].as<string>());
     string table_type(row[3].as<string>());
 
-	if (no_catalog && ((schema == "pg_catalog") || (schema == "information_schema")))
+	if (no_catalog && ((schema == "pg_catalog") || (schema == "information_schema") || (schema == "crdb_internal" )))
 		continue;
       
     tables.push_back(table(row[0].as<string>(),
